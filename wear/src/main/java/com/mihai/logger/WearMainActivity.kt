@@ -16,9 +16,11 @@ import androidx.compose.material.icons.filled.Stop
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
@@ -65,26 +67,22 @@ class WearMainActivity : ComponentActivity(), SharedPreferences.OnSharedPreferen
                         activityName = activeActivity!!,
                         startTime = activeStartTime,
                         onStopClick = {
-                            sendCommandToPhone("/stop_timer", "")
+                            sendCommandToPhone(path = "/stop_timer", payload = "")
                             // Assume stopped instantly to prevent UI lag
                             activeActivity = null
                             finish()
                         }
                     )
                 } else {
-                    // Show Full List Menu
-                    ScalingLazyColumn(
-                        modifier = Modifier.fillMaxSize().background(Color(0xFF121212)),
-                        contentPadding = PaddingValues(top = 28.dp, bottom = 28.dp, start = 12.dp, end = 12.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        items(allActivities) { act ->
-                            WearActivityButton(name = act) {
-                                sendCommandToPhone("/start_timer", act)
-                                finish()
-                            }
+                    // Show Full List Menu (New Google Home / Timer UI)
+                    ActivityMenuScreen(
+                        onActivityStart = { activityName ->
+                            sendCommandToPhone(path = "/start_timer", payload = activityName)
+                            // Assume started instantly to prevent UI lag
+                            activeActivity = activityName
+                            finish()
                         }
-                    }
+                    )
                 }
             }
         }
@@ -212,5 +210,91 @@ class WearMainActivity : ComponentActivity(), SharedPreferences.OnSharedPreferen
         val minutes = (millis / (1000 * 60)) % 60
         val hours = (millis / (1000 * 60 * 60))
         return String.format(Locale.US, "%02d:%02d:%02d", hours, minutes, seconds)
+    }
+}
+
+@Composable
+fun ActivityPill(
+    text: String,
+    backgroundColor: Color,
+    textColor: Color = Color.Black,
+    onClick: () -> Unit
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(width = 76.dp, height = 84.dp) // Tall pill shape
+            .clip(RoundedCornerShape(32.dp))
+            .background(backgroundColor)
+            .clickable { onClick() }
+            .padding(8.dp)
+    ) {
+        Text(
+            text = text,
+            color = textColor,
+            style = MaterialTheme.typography.button,
+            textAlign = TextAlign.Center,
+            maxLines = 2
+        )
+    }
+}
+
+@Composable
+fun ActivityMenuScreen(
+    onActivityStart: (String) -> Unit
+) {
+    ScalingLazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Optional Title
+        item {
+            Text(
+                text = "Activities",
+                color = Color.White,
+                style = MaterialTheme.typography.caption1,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
+
+        // Row 1
+        item {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ActivityPill(
+                    text = "Trading",
+                    backgroundColor = Color(0xFF00E5FF), // Cyan
+                    onClick = { onActivityStart("Trading") }
+                )
+                ActivityPill(
+                    text = "Matei",
+                    backgroundColor = Color(0xFF2979FF), // Blue
+                    onClick = { onActivityStart("Matei") }
+                )
+            }
+        }
+
+        // Row 2
+        item {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ActivityPill(
+                    text = "Food",
+                    backgroundColor = Color(0xFFFF9100), // Orange
+                    onClick = { onActivityStart("Food") }
+                )
+                ActivityPill(
+                    text = "ALL",
+                    backgroundColor = Color(0xFF424242), // Dark Gray
+                    textColor = Color.White,
+                    onClick = { onActivityStart("ALL") }
+                )
+            }
+        }
     }
 }

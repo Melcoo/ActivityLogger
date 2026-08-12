@@ -1,6 +1,7 @@
 package com.mihai.logger
 
 import android.annotation.SuppressLint
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import androidx.compose.runtime.Composable
@@ -10,8 +11,10 @@ import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceModifier
 import androidx.glance.LocalContext
 import androidx.glance.action.Action
+import androidx.glance.action.ActionParameters
+import androidx.glance.action.actionParametersOf
 import androidx.glance.action.clickable
-import androidx.glance.appwidget.action.actionStartActivity
+import androidx.glance.action.actionStartActivity
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
@@ -54,14 +57,19 @@ class LoggerTileService : GlanceTileService() {
         }
 
         fun createAction(activityName: String?): Action {
-            // Build an explicit intent so the system correctly extracts the extras
-            val intent = Intent(context, WearMainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                if (activityName != null) {
-                    putExtra("START_ACTIVITY", activityName)
-                }
+            val component = ComponentName(context, WearMainActivity::class.java)
+
+            return if (activityName != null) {
+                val activityKey = ActionParameters.Key<String>("START_ACTIVITY")
+                actionStartActivity(
+                    componentName = component,
+                    parameters = actionParametersOf(activityKey to activityName)
+                )
+            } else {
+                actionStartActivity(
+                    componentName = component
+                )
             }
-            return actionStartActivity(intent)
         }
 
         Column(
