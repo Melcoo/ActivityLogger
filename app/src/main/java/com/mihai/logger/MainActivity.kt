@@ -104,12 +104,17 @@ fun syncTop3ToWatch(context: Context) {
 
 // NEW: Syncs ongoing active timer state to Watch
 fun syncActiveTimerToWatch(context: Context, activityName: String?, startTime: Long) {
-    val putDataReq = PutDataMapRequest.create("/active_timer").apply {
+    val putDataReq = com.google.android.gms.wearable.PutDataMapRequest.create("/active_timer").apply {
+        // Force an empty string instead of null, and add a timestamp so DataClient ALWAYS syncs
         dataMap.putString("activity", activityName ?: "")
         dataMap.putLong("start_time", startTime)
         dataMap.putLong("timestamp", System.currentTimeMillis())
     }.asPutDataRequest()
-    Wearable.getDataClient(context).putDataItem(putDataReq)
+
+    // Forces the phone to bypass battery optimization and sync instantly!
+    putDataReq.setUrgent()
+
+    com.google.android.gms.wearable.Wearable.getDataClient(context).putDataItem(putDataReq)
 }
 
 class MainActivity : ComponentActivity() {

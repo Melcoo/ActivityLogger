@@ -1,6 +1,5 @@
 package com.mihai.logger
 
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import androidx.wear.tiles.TileService
@@ -48,7 +47,9 @@ class WatchDataListener : WearableListenerService() {
                     }
 
                     // NEW: Broadcast to instantly update the Watch UI if it's open
-                    sendBroadcast(Intent("UPDATE_WATCH_UI"))
+                    val updateIntent = Intent("UPDATE_WATCH_UI")
+                    updateIntent.setPackage(packageName) // Ensures strict delivery
+                    sendBroadcast(updateIntent)
                 }
             }
         }

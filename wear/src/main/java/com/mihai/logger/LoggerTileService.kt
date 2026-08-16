@@ -47,13 +47,13 @@ class LoggerTileService : GlanceTileService() {
         fun getColor(name: String): Color = when (name) {
             "Matei" -> Color(0xFF2979FF)
             "Food" -> Color(0xFFFF9100)
-            "NQ Live" -> Color(0xFF00E676)
-            "Trading Work" -> Color(0xFF00BCD4)
+            "Trading" -> Color(0xFF00E676)
             "Money Mgmt" -> Color(0xFFFFD740)
             "Shopping" -> Color(0xFFD500F9)
             "Housework" -> Color(0xFF8D6E63)
             "Outside Stuff" -> Color(0xFFE0E0E0)
-            else -> Color(0xFF607D8B)
+            "Moto" -> Color(0xFF525252)
+            else -> Color(0xFF8CA0B0)
         }
 
         fun createAction(activityName: String?): Action {

@@ -28,13 +28,21 @@ class PhoneMessageListener : WearableListenerService() {
                 putExtra(TimerService.EXTRA_ACTIVITY_NAME, activityName)
                 putExtra(TimerService.EXTRA_START_TIME, currentTime)
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(timerIntent) else startService(timerIntent)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(timerIntent)
+            } else {
+                startService(timerIntent)
+            }
 
             // 3. Broadcast to instantly update the Phone UI if it's open
-            sendBroadcast(Intent("UPDATE_TIMER_UI"))
+            val updateIntent = Intent("UPDATE_TIMER_UI")
+            updateIntent.setPackage(packageName) // REQUIRED for Android 14+ UI updates
+            sendBroadcast(updateIntent)
 
             // 4. Open UI
-            startActivity(Intent(this, MainActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP })
+            startActivity(Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            })
         }
 
         else if (event.path == "/stop_timer") {
@@ -50,10 +58,14 @@ class PhoneMessageListener : WearableListenerService() {
                 syncTop3ToWatch(this)
 
                 // Stop Notification Service
-                startService(Intent(this, TimerService::class.java).apply { action = TimerService.ACTION_STOP })
+                startService(Intent(this, TimerService::class.java).apply {
+                    action = TimerService.ACTION_STOP
+                })
 
                 // Broadcast to instantly update the Phone UI if it's open
-                sendBroadcast(Intent("UPDATE_TIMER_UI"))
+                val stopIntent = Intent("UPDATE_TIMER_UI")
+                stopIntent.setPackage(packageName) // REQUIRED for Android 14+ UI updates
+                sendBroadcast(stopIntent)
 
                 // Upload to Sheets directly in background
                 CoroutineScope(Dispatchers.IO).launch {
@@ -67,7 +79,9 @@ class PhoneMessageListener : WearableListenerService() {
                     )
                     try {
                         RetrofitClient.api.logActivity(logEntry)
-                    } catch (e: Exception) { e.printStackTrace() }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
                 }
             }
         }

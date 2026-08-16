@@ -36,9 +36,8 @@
             android:theme="@android:style/Theme.DeviceDefault">
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
-                <data android:scheme="wear" android:host="*" android:pathPrefix="/top_activities" />
-                <!-- Add this line to listen for active timer updates from the phone -->
-                <data android:scheme="wear" android:host="*" android:pathPrefix="/active_timer" />
+                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+                <data android:scheme="wear" android:host="*" android:pathPrefix="/" />
             </intent-filter>
         </service>
 

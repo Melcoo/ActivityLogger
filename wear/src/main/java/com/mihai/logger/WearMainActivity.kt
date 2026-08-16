@@ -33,13 +33,12 @@ import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
+import com.google.android.gms.tasks.Tasks
 import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
-import java.util.Locale
 
 class WearMainActivity : ComponentActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -62,7 +61,6 @@ class WearMainActivity : ComponentActivity(), SharedPreferences.OnSharedPreferen
             MaterialTheme {
                 val context = LocalContext.current
 
-                // Real-time listener to sync UI when the phone starts/stops a timer
                 DisposableEffect(context) {
                     val receiver = object : BroadcastReceiver() {
                         override fun onReceive(ctx: Context?, intent: Intent?) {
@@ -80,22 +78,22 @@ class WearMainActivity : ComponentActivity(), SharedPreferences.OnSharedPreferen
                 }
 
                 if (activeActivity != null) {
-                    // Show Ongoing Active Timer
                     ActiveTimerWatchScreen(
                         activityName = activeActivity!!,
                         startTime = activeStartTime,
                         onStopClick = {
                             sendCommandToPhone("/stop_timer", "")
                             activeActivity = null
+                            // NO finish() here so app stays open
                         }
                     )
                 } else {
-                    // Show Full List Menu (Google Home Style)
                     ActivityMenuScreen(
                         onActivityStart = { act ->
                             sendCommandToPhone("/start_timer", act)
                             activeActivity = act
                             activeStartTime = System.currentTimeMillis()
+                            // NO finish() here so app stays open
                         }
                     )
                 }
@@ -111,9 +109,8 @@ class WearMainActivity : ComponentActivity(), SharedPreferences.OnSharedPreferen
     private fun handleIntent(intent: Intent?) {
         var act = intent?.getStringExtra("START_ACTIVITY")
 
-        // AGGRESSIVE FALLBACK: Glance secretly prefixes ActionParameter keys
         if (act == null && intent?.extras != null) {
-            val allActivities = listOf("Matei", "Food", "NQ Live", "Trading Work", "Money Mgmt", "Shopping", "Housework", "Outside Stuff", "ALL")
+            val allActivities = listOf("Matei", "Food", "Trading", "Money Mgmt", "Shopping", "Housework", "Outside Stuff", "Moto", "Misc")
             for (key in intent.extras!!.keySet()) {
                 val value = intent.extras!!.get(key)?.toString()
                 if (value != null && allActivities.contains(value)) {
@@ -156,13 +153,13 @@ class WearMainActivity : ComponentActivity(), SharedPreferences.OnSharedPreferen
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val nodes = nodeClient.connectedNodes.await()
+                val nodes = Tasks.await(nodeClient.connectedNodes)
                 if (nodes.isEmpty()) {
                     runOnUiThread { Toast.makeText(this@WearMainActivity, "No phone connection", Toast.LENGTH_SHORT).show() }
                     return@launch
                 }
                 for (node in nodes) {
-                    messageClient.sendMessage(node.id, path, payload.toByteArray()).await()
+                    Tasks.await(messageClient.sendMessage(node.id, path, payload.toByteArray()))
                 }
             } catch (e: Exception) {
                 runOnUiThread { Toast.makeText(this@WearMainActivity, "Link failed", Toast.LENGTH_SHORT).show() }
@@ -170,8 +167,6 @@ class WearMainActivity : ComponentActivity(), SharedPreferences.OnSharedPreferen
         }
     }
 }
-
-// ---------------- UI COMPOSABLES ---------------- //
 
 @Composable
 fun ActivityMenuScreen(onActivityStart: (String) -> Unit) {
@@ -204,6 +199,11 @@ fun ActivityMenuScreen(onActivityStart: (String) -> Unit) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 ActivityPill("Housework", Color(0xFF8D6E63)) { onActivityStart("Housework") }
                 ActivityPill("Outside Stuff", Color(0xFFE0E0E0), Color.Black) { onActivityStart("Outside Stuff") }
+            }
+        }
+        item {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                ActivityPill("ALL", Color(0xFF333333)) { onActivityStart("ALL") }
             }
         }
 
@@ -252,7 +252,7 @@ fun ActiveTimerWatchScreen(activityName: String, startTime: Long, onStopClick: (
         val seconds = (duration / 1000) % 60
         val minutes = (duration / (1000 * 60)) % 60
         val hours = (duration / (1000 * 60 * 60))
-        val timeString = String.format(Locale.US, "%02d:%02d:%02d", hours, minutes, seconds)
+        val timeString = String.format(java.util.Locale.US, "%02d:%02d:%02d", hours, minutes, seconds)
 
         Text(timeString, color = Color(0xFF2196F3), fontSize = 24.sp, fontFamily = FontFamily.Monospace)
         Spacer(modifier = Modifier.height(12.dp))

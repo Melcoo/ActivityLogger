@@ -18,10 +18,7 @@ val myActivities = listOf(
     ActivityItem("Food", Icons.Default.Restaurant, Color(0xFFFF9100)),
 
     // 3. NQ Live (Active Trading) - Neon Green
-    ActivityItem("NQ Live", Icons.AutoMirrored.Filled.ShowChart, Color(0xFF00E676)),
-
-    // 4. Trading Work (Research/Review) - Teal
-    ActivityItem("Trading Work", Icons.Default.Computer, Color(0xFF00BCD4)),
+    ActivityItem("Trading", Icons.AutoMirrored.Filled.ShowChart, Color(0xFF00E676)),
 
     // 5. Money Management (Finance/Admin) - Gold
     ActivityItem("Money Mgmt", Icons.Default.AttachMoney, Color(0xFFFFD740)),
@@ -34,4 +31,7 @@ val myActivities = listOf(
 
     // 8. Outside Stuff (Errands/Transit) - Light Grey
     ActivityItem("Outside Stuff", Icons.Default.DirectionsCar, Color(0xFFE0E0E0)),
+
+    // 8. Outside Stuff (Errands/Transit) - Light Grey
+    ActivityItem("Moto", Icons.Default.DirectionsCar, Color(0xFFE0E0E0)),
 )
