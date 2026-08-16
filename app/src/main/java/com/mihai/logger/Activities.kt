@@ -33,5 +33,5 @@ val myActivities = listOf(
     ActivityItem("Outside Stuff", Icons.Default.DirectionsCar, Color(0xFFE0E0E0)),
 
     // 8. Outside Stuff (Errands/Transit) - Light Grey
-    ActivityItem("Moto", Icons.Default.DirectionsCar, Color(0xFFE0E0E0)),
+    ActivityItem("Moto", Icons.Default.Motorcycle, Color(0xFFE0E0E0)),
 )

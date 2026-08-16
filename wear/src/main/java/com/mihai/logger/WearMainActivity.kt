@@ -203,6 +203,8 @@ fun ActivityMenuScreen(onActivityStart: (String) -> Unit) {
         }
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                // 🟢 NEW: Moto button with the Motorcycle icon!
+                ActivityPill("Moto", Color(0xFFE53935)) { onActivityStart("Moto") }
                 ActivityPill("ALL", Color(0xFF333333)) { onActivityStart("ALL") }
             }
         }
