@@ -30,7 +30,10 @@ class PhoneMessageListener : WearableListenerService() {
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(timerIntent) else startService(timerIntent)
 
-            // 3. Open UI
+            // 3. Broadcast to instantly update the Phone UI if it's open
+            sendBroadcast(Intent("UPDATE_TIMER_UI"))
+
+            // 4. Open UI
             startActivity(Intent(this, MainActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP })
         }
 
@@ -48,6 +51,9 @@ class PhoneMessageListener : WearableListenerService() {
 
                 // Stop Notification Service
                 startService(Intent(this, TimerService::class.java).apply { action = TimerService.ACTION_STOP })
+
+                // Broadcast to instantly update the Phone UI if it's open
+                sendBroadcast(Intent("UPDATE_TIMER_UI"))
 
                 // Upload to Sheets directly in background
                 CoroutineScope(Dispatchers.IO).launch {

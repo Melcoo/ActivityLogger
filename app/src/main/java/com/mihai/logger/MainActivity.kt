@@ -161,27 +161,31 @@ fun MainScreen(voiceTrigger: Boolean, onVoiceHandled: () -> Unit) {
         if (spokenText != null) comment = if (comment.isEmpty()) spokenText else "$comment $spokenText"
     }
 
-    // ADD THIS: Listens for background updates from the Watch and updates the UI instantly
+    // NEW: Real-time UI Sync Listener for the Phone
     DisposableEffect(context) {
-        val prefs = context.getSharedPreferences("MyTimePrefs", Context.MODE_PRIVATE)
-        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-            if (key == "current_activity" || key == "start_time") {
-                val savedActivity = prefs.getString("current_activity", null)
-                val savedStartTime = prefs.getLong("start_time", 0L)
+        val receiver = object : android.content.BroadcastReceiver() {
+            override fun onReceive(ctx: android.content.Context?, intent: Intent?) {
+                val savedActivity = TimerStorage.getSavedActivity(context)
+                val savedStartTime = TimerStorage.getSavedStartTime(context)
 
                 if (savedActivity != null) {
-                    // Watch started a timer, instantly show Active Timer screen
                     currentActivity = myActivities.find { it.name == savedActivity } ?: ActivityItem(savedActivity, Icons.Default.Edit, Color.White)
                     startTime = savedStartTime
                 } else {
-                    // Watch stopped the timer, instantly return to the grid
                     currentActivity = null
                     startTime = 0L
                 }
             }
         }
-        prefs.registerOnSharedPreferenceChangeListener(listener)
-        onDispose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
+
+        androidx.core.content.ContextCompat.registerReceiver(
+            context,
+            receiver,
+            android.content.IntentFilter("UPDATE_TIMER_UI"),
+            androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+
+        onDispose { context.unregisterReceiver(receiver) }
     }
 
     LaunchedEffect(voiceTrigger) {
@@ -224,7 +228,6 @@ fun MainScreen(voiceTrigger: Boolean, onVoiceHandled: () -> Unit) {
                 ActiveTimerScreen(
                     activity = currentActivity!!, initialStartTime = startTime, comment = comment, isSending = isSending, onCommentChange = { comment = it },
                     onFinish = { finalStart, finalEnd ->
-                        // FIX: Save the name to a local variable FIRST so it doesn't become null mid-function!
                         val actName = currentActivity?.name ?: return@ActiveTimerScreen
 
                         isSending = true
@@ -252,7 +255,6 @@ fun MainScreen(voiceTrigger: Boolean, onVoiceHandled: () -> Unit) {
                     },
                     onCancel = { (context as? MainActivity)?.sendTimerCommand(TimerService.ACTION_STOP); TimerStorage.clearTimer(context); syncActiveTimerToWatch(context, null, 0L); currentActivity = null; comment = "" },
                     onUpdateStartTime = { newTime ->
-                        // FIX: Also protect this update block from null crashes
                         val actName = currentActivity?.name ?: return@ActiveTimerScreen
                         (context as? MainActivity)?.sendTimerCommand(TimerService.ACTION_UPDATE, actName, newTime)
                         TimerStorage.saveTimer(context, actName, newTime)
@@ -264,13 +266,6 @@ fun MainScreen(voiceTrigger: Boolean, onVoiceHandled: () -> Unit) {
         }
     }
 }
-
-// ... ActiveTimerScreen, ActivityButton, formatDuration ...
-// (KEEP YOUR EXISTING COMPOSABLES EXACTLY AS THEY WERE - NO CHANGES REQUIRED THERE)
-
-// ... ActiveTimerScreen, ActivityButton, formatDuration ...
-// (KEEP YOUR EXISTING COMPOSABLES EXACTLY AS THEY WERE - NO CHANGES REQUIRED THERE)
-
 
 @Composable
 fun ActiveTimerScreen(

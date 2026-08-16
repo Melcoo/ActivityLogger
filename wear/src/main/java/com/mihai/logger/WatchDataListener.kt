@@ -2,6 +2,7 @@ package com.mihai.logger
 
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import androidx.wear.tiles.TileService
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
@@ -45,6 +46,9 @@ class WatchDataListener : WearableListenerService() {
                         }
                         apply()
                     }
+
+                    // NEW: Broadcast to instantly update the Watch UI if it's open
+                    sendBroadcast(Intent("UPDATE_WATCH_UI"))
                 }
             }
         }
